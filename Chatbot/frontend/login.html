@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Banking Knowledge Chatbot - Secure login for banking operations teams">
+    <title>BankBot AI - Login</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo-icon">🏦</div>
+                <h1>BankBot AI</h1>
+                <p>Intelligent Banking Knowledge Assistant</p>
+            </div>
+
+            <div class="login-error" id="loginError"></div>
+
+            <form id="loginForm" autocomplete="off">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+            </form>
+
+            <div class="login-footer">
+                <p>🔒 Secured with JWT Authentication & Role-Based Access</p>
+                <p style="margin-top:8px; color: #64748b;">Demo: admin/admin123 • ops_user/ops123 • compliance/comp123</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // Check if already logged in
+        const token = localStorage.getItem('bankbot_token');
+        if (token) {
+            window.location.href = '/chat';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errorEl = document.getElementById('loginError');
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) return;
+
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+            errorEl.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Login failed');
+                }
+
+                localStorage.setItem('bankbot_token', data.token);
+                localStorage.setItem('bankbot_user', JSON.stringify(data.user));
+                window.location.href = '/chat';
+
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>

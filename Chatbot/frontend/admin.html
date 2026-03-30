@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankBot AI - Admin Panel</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h2>🏦 BankBot AI — Admin Panel</h2>
+            <div class="admin-nav">
+                <button class="admin-nav-btn active" data-tab="dashboard" id="tabDashboard">Dashboard</button>
+                <button class="admin-nav-btn" data-tab="audit" id="tabAudit">Audit Logs</button>
+                <button class="admin-nav-btn" data-tab="users" id="tabUsers">Users</button>
+                <a href="/chat" class="admin-nav-btn">← Back to Chat</a>
+            </div>
+        </div>
+        <div class="admin-content" id="adminContent">
+            <div id="loadingAdmin" style="text-align:center;padding:60px;color:var(--text-tertiary);">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        const API = window.location.origin;
+        const token = localStorage.getItem('bankbot_token');
+        const user = JSON.parse(localStorage.getItem('bankbot_user') || '{}');
+        if (!token) window.location.href = '/';
+        if (user.role !== 'admin' && user.role !== 'compliance') {
+            document.getElementById('adminContent').innerHTML = '<div style="text-align:center;padding:60px;color:var(--accent-red);">⚠️ Access Denied. Admin or Compliance role required.</div>';
+        } else {
+            loadDashboard();
+        }
+
+        // Tab navigation
+        document.querySelectorAll('.admin-nav-btn[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.dataset.tab;
+                if (tab === 'dashboard') loadDashboard();
+                else if (tab === 'audit') loadAuditLogs();
+                else if (tab === 'users') loadUsers();
+            });
+        });
+
+        async function apiFetch(endpoint) {
+            const res = await fetch(`${API}${endpoint}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.status === 401) { window.location.href = '/'; return null; }
+            return res.json();
+        }
+
+        async function loadDashboard() {
+            const [stats, auditData] = await Promise.all([
+                apiFetch('/api/knowledge/stats'),
+                apiFetch('/api/audit/logs?limit=10')
+            ]);
+            if (!stats) return;
+
+            const cats = stats.categories ? Object.entries(stats.categories).map(([k,v]) => `<li style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);"><span style="color:var(--text-secondary);text-transform:capitalize;">${k}</span><span style="color:var(--accent-gold);font-weight:600;">${v}</span></li>`).join('') : '';
+
+            document.getElementById('adminContent').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:rgba(212,175,55,0.15);color:var(--accent-gold);">📚</div>
+                        <div class="stat-value">${stats.total_documents || 0}</div>
+                        <div class="stat-label">Knowledge Documents</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:rgba(0,212,170,0.15);color:var(--accent-teal);">🔢</div>
+                        <div class="stat-value">${stats.total_vectors || 0}</div>
+                        <div class="stat-label">Vector Embeddings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:rgba(79,140,255,0.15);color:var(--accent-blue);">📁</div>
+                        <div class="stat-value">${stats.category_count || 0}</div>
+                        <div class="stat-label">Knowledge Categories</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:rgba(167,139,250,0.15);color:var(--accent-purple);">🤖</div>
+                        <div class="stat-value">${stats.embedding_model || 'N/A'}</div>
+                        <div class="stat-label">Embedding Model</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                    <div class="stat-card">
+                        <h3 style="color:var(--accent-gold);margin-bottom:16px;font-size:1rem;">Categories Breakdown</h3>
+                        <ul style="list-style:none;">${cats}</ul>
+                    </div>
+                    <div class="stat-card">
+                        <h3 style="color:var(--accent-gold);margin-bottom:16px;font-size:1rem;">Recent Activity</h3>
+                        ${auditData && auditData.logs ? auditData.logs.slice(0,6).map(l => `
+                            <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:0.813rem;">
+                                <span style="color:var(--accent-teal);">${l.username}</span>
+                                <span style="color:var(--text-tertiary);"> — ${l.action} </span>
+                                <span style="color:var(--text-muted);font-size:0.688rem;">${new Date(l.timestamp).toLocaleString()}</span>
+                            </div>
+                        `).join('') : '<div style="color:var(--text-tertiary);">No activity yet</div>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadAuditLogs() {
+            const data = await apiFetch('/api/audit/logs?limit=100');
+            if (!data) return;
+
+            const rows = (data.logs || []).map(l => {
+                const actionClass = l.action.includes('QUERY') ? 'query' : l.action.includes('LOGIN') ? 'login' : l.action.includes('ADMIN') ? 'admin' : 'search';
+                return `<tr>
+                    <td>${new Date(l.timestamp).toLocaleString()}</td>
+                    <td>${l.username}</td>
+                    <td><span class="action-badge ${actionClass}">${l.action}</span></td>
+                    <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.query || '-'}</td>
+                    <td>${l.category || '-'}</td>
+                    <td>${l.confidence ? (l.confidence * 100).toFixed(0) + '%' : '-'}</td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('adminContent').innerHTML = `
+                <h3 style="color:var(--text-primary);margin-bottom:20px;">Audit Trail — Compliance Logs</h3>
+                <div class="audit-table-wrapper">
+                    <table class="audit-table">
+                        <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Query</th><th>Category</th><th>Confidence</th></tr></thead>
+                        <tbody>${rows || '<tr><td colspan="6" style="text-align:center;padding:40px;">No logs yet</td></tr>'}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function loadUsers() {
+            const data = await apiFetch('/api/auth/users');
+            if (!data) return;
+
+            const rows = (data.users || []).map(u => `<tr>
+                <td><strong style="color:var(--text-primary);">${u.full_name}</strong></td>
+                <td>${u.username}</td>
+                <td><span class="action-badge admin" style="text-transform:capitalize;">${u.role}</span></td>
+                <td>${u.department || '-'}</td>
+                <td>${u.is_active ? '<span style="color:var(--accent-green);">Active</span>' : '<span style="color:var(--accent-red);">Inactive</span>'}</td>
+                <td>${u.last_login ? new Date(u.last_login).toLocaleString() : 'Never'}</td>
+            </tr>`).join('');
+
+            document.getElementById('adminContent').innerHTML = `
+                <h3 style="color:var(--text-primary);margin-bottom:20px;">User Management</h3>
+                <div class="audit-table-wrapper">
+                    <table class="audit-table">
+                        <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Department</th><th>Status</th><th>Last Login</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

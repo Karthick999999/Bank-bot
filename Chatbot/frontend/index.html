@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BankBot AI - Intelligent Banking Knowledge Assistant powered by RAG">
+    <title>BankBot AI - Chat</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>">
+</head>
+<body>
+    <div class="app-container" id="appContainer">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-sm">🏦</div>
+                    <h2>BankBot AI <span>Knowledge Assistant</span></h2>
+                </div>
+                <button class="new-chat-btn" id="newChatBtn" title="Start new conversation">
+                    <span>✚</span> New Conversation
+                </button>
+            </div>
+            <div class="conversations-list" id="conversationsList"></div>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">AD</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Admin</div>
+                        <div class="user-role" id="userRole">admin</div>
+                    </div>
+                    <button class="logout-btn" id="logoutBtn" title="Logout">⏻</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <button class="menu-toggle" id="menuToggle">☰</button>
+                    <h3 id="chatTitle">Banking Knowledge Assistant</h3>
+                </div>
+                <div class="chat-header-right">
+                    <span class="header-badge badge-online">● Online</span>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome screen -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">🏦</div>
+                    <h2>Welcome to BankBot AI</h2>
+                    <p>Your intelligent banking knowledge companion. Ask me anything about banking policies, procedures, compliance requirements, and product guidelines.</p>
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" data-query="What is the KYC process for opening a savings account?">
+                            <span class="qa-icon">📋</span>
+                            <span>KYC process for savings account opening</span>
+                        </button>
+                        <button class="quick-action-btn" data-query="What are the RBI guidelines for NPA classification?">
+                            <span class="qa-icon">📊</span>
+                            <span>RBI NPA classification guidelines</span>
+                        </button>
+                        <button class="quick-action-btn" data-query="How to handle a credit card dispute?">
+                            <span class="qa-icon">💳</span>
+                            <span>Credit card dispute handling process</span>
+                        </button>
+                        <button class="quick-action-btn" data-query="What are the NEFT, RTGS, and IMPS transaction limits?">
+                            <span class="qa-icon">📱</span>
+                            <span>NEFT/RTGS/IMPS transaction limits</span>
+                        </button>
+                        <button class="quick-action-btn" data-query="Explain the Anti-Money Laundering policy">
+                            <span class="qa-icon">🔒</span>
+                            <span>Anti-Money Laundering policy overview</span>
+                        </button>
+                        <button class="quick-action-btn" data-query="What is the home loan eligibility criteria?">
+                            <span class="qa-icon">🏠</span>
+                            <span>Home loan eligibility requirements</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea class="chat-input" id="chatInput" placeholder="Ask about banking policies, procedures, compliance..." rows="1"></textarea>
+                    <button class="send-btn" id="sendBtn" title="Send message">➤</button>
+                </div>
+                <div class="input-hint">Press Enter to send • Shift+Enter for new line</div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/chat.js"></script>
+</body>
+</html>
